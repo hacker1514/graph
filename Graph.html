@@ -1,0 +1,249 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Graph Editor</title>
+<style>
+  body {
+    margin: 0;
+    background-color: black;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border: 3px solid orange;
+    justify-content: center;
+    background: black;
+  }
+  .toolbar button {
+    background-color: blue;
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+  }
+  .toolbar button.active {
+    background-color: red;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+    border: 1px solid #ccc;
+  }
+  #unitsBox {
+    position: absolute;
+    top: 160px;
+    right: 30px;
+    border: 2px solid pink;
+    padding: 10px;
+    background-color: black;
+    color: white;
+    font-weight: bold;
+    z-index: 10;
+  }
+  input[type="number"] {
+    width: 50px;
+  }
+</style>
+</head>
+<body><div class="toolbar">
+  <button onclick="selectTool('LINE')">LINE</button>
+  <button onclick="selectTool('POINT')">POINT</button>
+  <button onclick="selectTool('REDO')">REDO</button>
+  <button onclick="selectTool('UNDO')">UNDO</button>
+  <button onclick="selectTool('SAVE')">SAVE</button>
+  <button onclick="selectTool('ERASE')">ERASE</button>
+  <button onclick="selectTool('REFRESH')">REFRESH</button>
+  <button onclick="selectTool('TEXT')">TEXT</button>
+</div><canvas id="graphCanvas" width="794" height="1123"></canvas>
+
+<div id="unitsBox">
+  UNITS:<br>
+  x-axis: <input type="number" id="xLimit" onchange="updateGrid()"><br>
+  y-axis: <input type="number" id="yLimit" onchange="updateGrid()"><br>
+  x'-axis: <input type="number" id="xpLimit" onchange="updateGrid()"><br>
+  y'-axis: <input type="number" id="ypLimit" onchange="updateGrid()">
+</div>
+<audio id="clickSound" src="https://github.com/Niranjan164/COMPILER/raw/main/click-151673_073339.mp3"></audio><script>
+const canvas = document.getElementById("graphCanvas");
+const ctx = canvas.getContext("2d");
+const clickSound = document.getElementById("clickSound");
+
+let activeTool = null;
+let actions = [];
+let undoneActions = [];
+let currentPoints = [];
+
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+let xLimit = 10, yLimit = 10, xpLimit = 10, ypLimit = 10;
+
+function playSound() {
+  clickSound.currentTime = 0;
+  clickSound.play();
+}
+
+function selectTool(tool) {
+  playSound();
+  const buttons = document.querySelectorAll(".toolbar button");
+  buttons.forEach(btn => btn.classList.remove("active"));
+  if (activeTool === tool) {
+    activeTool = null;
+    return;
+  }
+  activeTool = tool;
+  buttons.forEach(btn => {
+    if (btn.textContent === tool) btn.classList.add("active");
+  });
+}
+
+function updateGrid() {
+  xLimit = parseInt(document.getElementById("xLimit").value) || 10;
+  yLimit = parseInt(document.getElementById("yLimit").value) || 10;
+  xpLimit = parseInt(document.getElementById("xpLimit").value) || 10;
+  ypLimit = parseInt(document.getElementById("ypLimit").value) || 10;
+  drawGraph();
+}
+
+function drawGraph() {
+  ctx.fillStyle = "pink";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#555";
+  let totalDivisions = 20;
+  for (let i = -totalDivisions; i <= totalDivisions; i++) {
+    let x = centerX + i * (canvas.width / (2 * totalDivisions));
+    let y = centerY + i * (canvas.height / (2 * totalDivisions));
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+
+  // Axis
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height); ctx.stroke();
+
+  // Arrows and labels
+  ctx.fillStyle = "green";
+  ctx.font = "16px Arial";
+  ctx.fillText("X", canvas.width - 20, centerY - 10);
+  ctx.fillText("X'", 10, centerY - 10);
+  ctx.fillText("Y", centerX + 10, 20);
+  ctx.fillText("Y'", centerX + 10, canvas.height - 10);
+  ctx.fillText("O", centerX + 5, centerY + 15);
+
+  // Unit labels inside graph
+  ctx.fillStyle = "pink";
+  ctx.font = "bold 16px Arial";
+  ctx.fillText("UNITS:", canvas.width - 160, 30);
+  ctx.fillStyle = "black";
+  ctx.fillText("x-axis: " + xLimit, canvas.width - 160, 50);
+  ctx.fillText("y-axis: " + yLimit, canvas.width - 160, 70);
+  ctx.fillText("x'-axis: " + xpLimit, canvas.width - 160, 90);
+  ctx.fillText("y'-axis: " + ypLimit, canvas.width - 160, 110);
+
+  // Axis values
+  ctx.fillStyle = "black";
+  for (let i = 1; i <= totalDivisions; i++) {
+    let x = centerX + i * (canvas.width / (2 * totalDivisions));
+    let y = centerY + i * (canvas.height / (2 * totalDivisions));
+    let xNeg = centerX - i * (canvas.width / (2 * totalDivisions));
+    let yNeg = centerY - i * (canvas.height / (2 * totalDivisions));
+    ctx.fillText(i * xLimit, x, centerY + 12);
+    ctx.fillText(-i * xpLimit, xNeg, centerY + 12);
+    ctx.fillText(i * yLimit, centerX + 5, yNeg);
+    ctx.fillText(-i * ypLimit, centerX + 5, y);
+  }
+
+  actions.forEach(action => {
+    if (action.type === 'line') {
+      ctx.strokeStyle = 'lime';
+      ctx.beginPath();
+      ctx.moveTo(action.p1.x, action.p1.y);
+      ctx.lineTo(action.p2.x, action.p2.y);
+      ctx.stroke();
+    } else if (action.type === 'point') {
+      ctx.fillStyle = 'yellow';
+      ctx.font = '30px Arial';
+      ctx.fillText('X', action.p.x - 8, action.p.y + 10);
+    } else if (action.type === 'text') {
+      ctx.fillStyle = 'cyan';
+      ctx.font = '30px Arial';
+      ctx.fillText(action.text, action.p.x, action.p.y);
+    }
+  });
+}
+
+canvas.addEventListener("click", (e) => {
+  if (!activeTool) return;
+  playSound();
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  if (activeTool === "POINT") {
+    actions.push({ type: 'point', p: { x, y } });
+    undoneActions = [];
+  } else if (activeTool === "LINE") {
+    currentPoints.push({ x, y });
+    if (currentPoints.length === 2) {
+      actions.push({ type: 'line', p1: currentPoints[0], p2: currentPoints[1] });
+      currentPoints = [];
+      undoneActions = [];
+    }
+  } else if (activeTool === "TEXT") {
+    const text = prompt("Enter text:");
+    if (text) {
+      actions.push({ type: 'text', p: { x, y }, text });
+      undoneActions = [];
+    }
+  } else if (activeTool === "ERASE") {
+    actions = actions.filter(action => {
+      if (action.p && Math.abs(action.p.x - x) < 15 && Math.abs(action.p.y - y) < 15) return false;
+      if (action.p1 && action.p2) {
+        return !(Math.abs(action.p1.x - x) < 15 && Math.abs(action.p1.y - y) < 15);
+      }
+      return true;
+    });
+    drawGraph();
+  }
+  drawGraph();
+});
+
+document.querySelector("button[onclick*=UNDO]").addEventListener("click", () => {
+  playSound();
+  if (actions.length > 0) undoneActions.push(actions.pop());
+  drawGraph();
+});
+
+document.querySelector("button[onclick*=REDO]").addEventListener("click", () => {
+  playSound();
+  if (undoneActions.length > 0) actions.push(undoneActions.pop());
+  drawGraph();
+});
+
+document.querySelector("button[onclick*=REFRESH]").addEventListener("click", () => {
+  playSound();
+  actions = [];
+  undoneActions = [];
+  drawGraph();
+});
+
+document.querySelector("button[onclick*=SAVE]").addEventListener("click", () => {
+  playSound();
+  const image = canvas.toDataURL("image/png");
+  const link = document.createElement('a');
+  link.href = image;
+  link.download = 'graph.png';
+  link.click();
+});
+
+drawGraph();
+</script></body>
+</html>
