@@ -13,6 +13,7 @@
     <button style="background-color:black;color:green;font-size:25px;padding:5px 25px;position:absolute;right:190px;top:65px;" onclick="go()">GO</button>
     <audio id="song" src="https://raw.githubusercontent.com/hacker1514/Store/main/back_110812.mp3" autoplay loop></audio>
     <audio id="audio" src="https://github.com/Niranjan164/COMPILER/raw/main/click-151673_073339.mp3"></audio>
+    <video style="position:absolute;right:0px;top:2px;" id="v" src="https://hacker1514.github.io./graph/globe.mp4" width="500px" height="500px" autoplay muted loop></video>
     <label style="color:orange;position:absolute;left:235px;top:68px;font-size:25px;padding:5px 25px;">SEARCH:</label>
     <input style="background-color:black;color:white;position:absolute;left:370px;top:69px;font-size:25px; width:280px;" id="search" type="text">
     <div id="savedLinks" style="position:absolute;top:150px;left:10px;color:white;font-size:20px;"></div>       <script>
@@ -64,8 +65,13 @@
                 display();
             }
         }
+        function video(){
+                  let x=document.getElementById("v");
+                   x.play();
+        }
 
         function display() {
+                video();
             let out = "<h3 style='color:yellow;'>Your Saved Links:</h3>";
             for (let i = 0; i < localStorage.length; i++) {
                 let title = localStorage.key(i);
