@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NIRANJAN CREATIONS</title>
+</head>
+<body style="background-image:url('https://hacker1514.github.io/graph/background.jpg');background-size:cover;background-repeat:repeat;" onload="display()">
+    <h1 style="background-color:red;color:yellow;text-align:center;">WELCOME TO SEND WEB BROWSER</h1>
+    <h1 style="position:absolute;right:10px;top:2px;color:blue;">MUSIC</h1>
+    <button style="background-color:black;color:green;font-size:25px;padding:5px 25px;position:absolute;right:100px;top:65px;" onclick="on()">ON</button>
+    <button style="background-color:black;color:green;font-size:25px;padding:5px 25px;position:absolute;right:0px;top:65px;" onclick="off()">OFF</button>
+    <button style="background-color:black;color:green;font-size:25px;padding:5px 25px;position:absolute;left:0px;top:65px;" onclick="add()">ADD</button>
+    <button style="background-color:black;color:green;font-size:25px;padding:5px 25px;position:absolute;left:100px;top:65px;" onclick="remove()">REMOVE</button>
+    <button style="background-color:black;color:green;font-size:25px;padding:5px 25px;position:absolute;right:190px;top:65px;" onclick="go()">GO</button>
+    <audio id="song" src="https://raw.githubusercontent.com/hacker1514/Store/main/back_110812.mp3" autoplay loop></audio>
+    <audio id="audio" src="https://github.com/Niranjan164/COMPILER/raw/main/click-151673_073339.mp3"></audio>
+    <label style="color:orange;position:absolute;left:255px;top:68px;font-size:25px;padding:5px 25px;">SEARCH:</label>
+    <input style="background-color:black;color:white;position:absolute;left:390px;top:65px;font-size:25px;padding:5px 155px;" id="search" type="text">
+    <div id="savedLinks" style="position:absolute;top:150px;left:10px;color:white;font-size:20px;"></div>       <script>
+        function click() {
+            let k = document.getElementById("audio");
+            k.play();
+        }
+
+        function on() {
+            click();
+            let n = document.getElementById("song");
+            n.play();
+        }
+
+        function off() {
+            click();
+            let m = document.getElementById("song");
+            m.pause();
+        }
+
+        function go() {
+            click();
+            let s = document.getElementById("search").value;
+            if (s.trim() !== "") {
+                if (!s.startsWith("http")) {
+                    s = "https://" + s;
+                }
+                window.open(s,"_blank");
+            }
+        }
+
+        function add() {
+            click();
+            alert("ADD is used for adding your important website searches");
+            let title = prompt("Enter link title:");
+            let link = prompt("Enter link address (e.g. https://...)");
+            if (title && link) {
+                localStorage.setItem(title, link);
+                display();
+            }
+        }
+
+        function remove() {
+            click();
+            alert("REMOVE is used for removing your unimportant website searches");
+            let t = prompt("Enter link title to remove:");
+            if (t) {
+                localStorage.removeItem(t);
+                display();
+            }
+        }
+
+        function display() {
+            let out = "<h3 style='color:yellow;'>Your Saved Links:</h3>";
+            for (let i = 0; i < localStorage.length; i++) {
+                let title = localStorage.key(i);
+                let url = localStorage.getItem(title);
+                out += `<p>
+                          <a href="${url}" target="_blank" style="color:cyan;font-size:25px;">
+                            ${title}
+                          </a>
+                        </p>`;
+            }
+            document.getElementById("savedLinks").innerHTML = out;
+        }
+    </script>
+</body>
+</html>
